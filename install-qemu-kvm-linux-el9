@@ -1,0 +1,5 @@
+#!/bin/bash
+sudo dnf group install "Virtualization Host" -y
+sudo dnf install -y qemu-kvm libvirt virt-install virt-viewer
+sudo for drv in qemu network nodedev nwfilter secret storage interface; do systemctl enable --now virt${drv}d{,-ro,-admin}.socket; done
+sudo virt-host-validate
