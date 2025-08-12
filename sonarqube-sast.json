@@ -1,0 +1,92 @@
+{
+  "Hotspots": [
+    {
+      "key": "7e578d50-2101-431a-904e-7a781ac287bc",
+      "component": "nusames-mole-web-feature-inh-3000-nus-er-271188-auto-generate-production:Dockerfile",
+      "project": "nusames-mole-web-feature-inh-3000-nus-er-271188-auto-generate-production",
+      "securityCategory": "permission",
+      "vulnerabilityProbability": "MEDIUM",
+      "status": "TO_REVIEW",
+      "line": 10,
+      "message": "The \"nginx\" image runs with \"root\" as the default user. Make sure it is safe here.",
+      "author": "o.midiyanto@mis-z031.satnusa.com",
+      "creationDate": "2025-06-13T09:23:58+0000",
+      "updateDate": "2025-06-17T05:48:18+0000",
+      "FilePath": "Dockerfile",
+      "Recommendation": "\u003ch2\u003eRecommended Secure Coding Practices\u003c/h2\u003e\n\u003cp\u003eIn the Dockerfile:\u003c/p\u003e\n\u003cul\u003e\n  \u003cli\u003e Create a new default user and use it with the \u003ccode\u003eUSER\u003c/code\u003e statement.\n    \u003cul\u003e\n      \u003cli\u003e Some container maintainers create a specific user to be used without explicitly setting it as default, such as \u003ccode\u003epostgresql\u003c/code\u003e or\n      \u003ccode\u003ezookeeper\u003c/code\u003e. It is recommended to use these users instead of root. \u003c/li\u003e\n      \u003cli\u003e On Windows containers, the \u003ccode\u003eContainerUser\u003c/code\u003e is available for this purpose. \u003c/li\u003e\n    \u003c/ul\u003e  \u003c/li\u003e\n\u003c/ul\u003e\n\u003cp\u003eOr, at launch time:\u003c/p\u003e\n\u003cul\u003e\n  \u003cli\u003e Use the \u003ccode\u003euser\u003c/code\u003e argument when calling Docker or in the docker-compose file. \u003c/li\u003e\n  \u003cli\u003e Add fine-grained Linux capabilities to perform specific actions that require root privileges. \u003c/li\u003e\n\u003c/ul\u003e\n\u003cp\u003eIf this image is already explicitly set to launch with a non-privileged user, you can add it to the safe images list rule property of your\nSonarQube instance, without the tag.\u003c/p\u003e\n\u003ch2\u003eCompliant Solution\u003c/h2\u003e\n\u003cp\u003eFor Linux-based images and scratch-based images that untar a Linux distribution:\u003c/p\u003e\n\u003cpre\u003e\nFROM alpine\n\nRUN addgroup -S nonroot \\\n    \u0026amp;\u0026amp; adduser -S nonroot -G nonroot\n\nUSER nonroot\n\nENTRYPOINT [\"id\"]\n\u003c/pre\u003e\n\u003cp\u003eFor Windows-based images, you can use \u003ccode\u003eContainerUser\u003c/code\u003e or create a new user:\u003c/p\u003e\n\u003cpre\u003e\nFROM mcr.microsoft.com/windows/servercore:ltsc2019\n\nRUN net user /add nonroot\n\nUSER nonroot\n\u003c/pre\u003e\n\u003cp\u003eFor multi-stage builds, the non-root user should be on the last stage:\u003c/p\u003e\n\u003cpre\u003e\nFROM alpine as builder\nCOPY Makefile ./src /\nRUN make build\n\nFROM alpine as runtime\nRUN addgroup -S nonroot \\\n    \u0026amp;\u0026amp; adduser -S nonroot -G nonroot\nCOPY --from=builder bin/production /app\nUSER nonroot\nENTRYPOINT [\"/app/production\"]\n\u003c/pre\u003e\n\u003cp\u003eFor images that use \u003ccode\u003escratch\u003c/code\u003e as their base, it is not possible to add non-privileged users by default. To do this, add an additional\nbuild stage to add the group and user, and later copy \u003ccode\u003e/etc/passwd\u003c/code\u003e.\u003c/p\u003e\n\u003cp\u003eHere is an example that uses \u003ccode\u003eadduser\u003c/code\u003e in the first stage to generate a user and add it to the \u003ccode\u003e/etc/passwd\u003c/code\u003e file. In the\nnext stage, this user is added by copying that file over from the previous stage:\u003c/p\u003e\n\u003cpre\u003e\nFROM alpine:latest as security_provider\nRUN addgroup -S nonroot \\\n    \u0026amp;\u0026amp; adduser -S nonroot -G nonroot\n\nFROM scratch as production\nCOPY --from=security_provider /etc/passwd /etc/passwd\nUSER nonroot\nCOPY production_binary /app\nENTRYPOINT [\"/app/production_binary\"]\n\u003c/pre\u003e\n\u003ch2\u003eSee\u003c/h2\u003e\n\u003cul\u003e\n  \u003cli\u003e CWE - \u003ca href=\"https://cwe.mitre.org/data/definitions/284\"\u003eCWE-284 - Improper Access Control\u003c/a\u003e \u003c/li\u003e\n  \u003cli\u003e \u003ca href=\"https://hub.docker.com/r/nginxinc/nginx-unprivileged\"\u003enginxinc/nginx-unprivileged: Example of a non-root container by default\u003c/a\u003e\n  \u003c/li\u003e\n  \u003cli\u003e \u003ca\n  href=\"https://learn.microsoft.com/en-us/virtualization/windowscontainers/manage-containers/container-security#when-to-use-containeradmin-and-containeruser-user-accounts\"\u003eMicrosoft docs, When to use ContainerAdmin and ContainerUser user accounts\u003c/a\u003e \u003c/li\u003e\n\u003c/ul\u003e",
+      "Severity": "MEDIUM",
+      "StartLine": 10,
+      "EndLine": 11,
+      "rule": {
+        "key": "",
+        "name": ""
+      }
+    },
+    {
+      "key": "8d3b049f-78f8-4586-b811-c7693a31f626",
+      "component": "nusames-mole-web-feature-inh-3000-nus-er-271188-auto-generate-production:Dockerfile",
+      "project": "nusames-mole-web-feature-inh-3000-nus-er-271188-auto-generate-production",
+      "securityCategory": "permission",
+      "vulnerabilityProbability": "MEDIUM",
+      "status": "TO_REVIEW",
+      "line": 6,
+      "message": "Copying recursively might inadvertently add sensitive data to the container. Make sure it is safe here.",
+      "author": "o.midiyanto@mis-z031.satnusa.com",
+      "creationDate": "2025-06-13T09:23:58+0000",
+      "updateDate": "2025-06-17T05:48:18+0000",
+      "FilePath": "Dockerfile",
+      "Recommendation": "\u003ch2\u003eRecommended Secure Coding Practices\u003c/h2\u003e\n\u003cul\u003e\n  \u003cli\u003e Limit the usage of globbing in the \u003ccode\u003eCOPY\u003c/code\u003e and \u003ccode\u003eADD\u003c/code\u003e sources definition. \u003c/li\u003e\n  \u003cli\u003e Avoid copying the entire context directory to the image filesystem. \u003c/li\u003e\n  \u003cli\u003e Prefer providing an explicit list of files and directories that are required for the image to properly run. \u003c/li\u003e\n\u003c/ul\u003e\n\u003ch2\u003eCompliant Solution\u003c/h2\u003e\n\u003cpre\u003e\nFROM ubuntu:22.04\nCOPY ./example1 /example1\nCOPY ./example2 /example2\nCOPY ./run.sh /\nCMD /run.sh\n\u003c/pre\u003e\n\u003ch2\u003eSee\u003c/h2\u003e\n\u003cul\u003e\n  \u003cli\u003e \u003ca href=\"https://docs.docker.com/engine/reference/builder/#copy\"\u003eDockerfile reference\u003c/a\u003e - COPY directive \u003c/li\u003e\n  \u003cli\u003e \u003ca href=\"https://docs.docker.com/engine/reference/builder/#add\"\u003eDockerfile reference\u003c/a\u003e - ADD directive \u003c/li\u003e\n  \u003cli\u003e CWE - \u003ca href=\"https://cwe.mitre.org/data/definitions/668\"\u003eCWE-668 - Exposure of Resource to Wrong Sphere\u003c/a\u003e \u003c/li\u003e\n  \u003cli\u003e CWE - \u003ca href=\"https://cwe.mitre.org/data/definitions/497\"\u003eCWE-497 - Exposure of Sensitive System Information to an Unauthorized Control\n  Sphere\u003c/a\u003e \u003c/li\u003e\n\u003c/ul\u003e",
+      "Severity": "MEDIUM",
+      "StartLine": 6,
+      "EndLine": 7,
+      "rule": {
+        "key": "",
+        "name": ""
+      }
+    },
+    {
+      "key": "9b09449d-b53e-4fde-86b8-8bc975ce3565",
+      "component": "nusames-mole-web-feature-inh-3000-nus-er-271188-auto-generate-production:Dockerfile",
+      "project": "nusames-mole-web-feature-inh-3000-nus-er-271188-auto-generate-production",
+      "securityCategory": "others",
+      "vulnerabilityProbability": "LOW",
+      "status": "TO_REVIEW",
+      "line": 5,
+      "message": "Omitting \"--ignore-scripts\" can lead to the execution of shell scripts. Make sure it is safe here.",
+      "author": "o.midiyanto@mis-z031.satnusa.com",
+      "creationDate": "2025-06-13T09:23:58+0000",
+      "updateDate": "2025-06-17T05:48:18+0000",
+      "FilePath": "Dockerfile",
+      "Recommendation": "\u003ch2\u003eRecommended Secure Coding Practices\u003c/h2\u003e\n\u003cp\u003eExecution of third-party scripts should be disabled if not strictly necessary for dependencies to work correctly. Doing this will reduce the attack\nsurface and block a well-known supply chain attack vector.\u003c/p\u003e\n\u003cp\u003eCommands that are subject to this issue are: \u003ccode\u003enpm install\u003c/code\u003e, \u003ccode\u003eyarn install\u003c/code\u003e and \u003ccode\u003eyarn\u003c/code\u003e (\u003ccode\u003eyarn\u003c/code\u003e without\nan explicit command will execute \u003ccode\u003einstall\u003c/code\u003e).\u003c/p\u003e\n\u003ch2\u003eCompliant Solution\u003c/h2\u003e\n\u003cpre data-diff-id=\"1\" data-diff-type=\"compliant\"\u003e\nFROM node:latest\n\nRUN npm install --ignore-scripts\n\u003c/pre\u003e\n\u003cpre data-diff-id=\"2\" data-diff-type=\"compliant\"\u003e\nFROM node:latest\n\nRUN yarn install --ignore-scripts\n\u003c/pre\u003e\n\u003ch2\u003eSee\u003c/h2\u003e\n\u003cul\u003e\n  \u003cli\u003e CWE - \u003ca href=\"https://cwe.mitre.org/data/definitions/506\"\u003eCWE-506 - Embedded Malicious Code\u003c/a\u003e \u003c/li\u003e\n  \u003cli\u003e CWE - \u003ca href=\"https://cwe.mitre.org/data/definitions/829\"\u003eCWE-829 - Inclusion of Functionality from Untrusted Control Sphere\u003c/a\u003e \u003c/li\u003e\n  \u003cli\u003e \u003ca href=\"https://eslint.org/blog/2018/07/postmortem-for-malicious-package-publishes/\"\u003eESLint blog\u003c/a\u003e - Postmortem for Malicious Packages\n  Published on July 12th, 2018 \u003c/li\u003e\n\u003c/ul\u003e",
+      "Severity": "LOW",
+      "StartLine": 5,
+      "EndLine": 8,
+      "rule": {
+        "key": "",
+        "name": ""
+      }
+    },
+    {
+      "key": "f3e13a6b-6916-424a-af25-198a18f260b9",
+      "component": "nusames-mole-web-feature-inh-3000-nus-er-271188-auto-generate-production:Dockerfile",
+      "project": "nusames-mole-web-feature-inh-3000-nus-er-271188-auto-generate-production",
+      "securityCategory": "others",
+      "vulnerabilityProbability": "LOW",
+      "status": "TO_REVIEW",
+      "line": 22,
+      "message": "Omitting \"--ignore-scripts\" can lead to the execution of shell scripts. Make sure it is safe here.",
+      "author": "o.midiyanto@mis-z031.satnusa.com",
+      "creationDate": "2025-06-13T09:23:58+0000",
+      "updateDate": "2025-06-17T05:48:18+0000",
+      "FilePath": "Dockerfile",
+      "Recommendation": "\u003ch2\u003eRecommended Secure Coding Practices\u003c/h2\u003e\n\u003cp\u003eExecution of third-party scripts should be disabled if not strictly necessary for dependencies to work correctly. Doing this will reduce the attack\nsurface and block a well-known supply chain attack vector.\u003c/p\u003e\n\u003cp\u003eCommands that are subject to this issue are: \u003ccode\u003enpm install\u003c/code\u003e, \u003ccode\u003eyarn install\u003c/code\u003e and \u003ccode\u003eyarn\u003c/code\u003e (\u003ccode\u003eyarn\u003c/code\u003e without\nan explicit command will execute \u003ccode\u003einstall\u003c/code\u003e).\u003c/p\u003e\n\u003ch2\u003eCompliant Solution\u003c/h2\u003e\n\u003cpre data-diff-id=\"1\" data-diff-type=\"compliant\"\u003e\nFROM node:latest\n\nRUN npm install --ignore-scripts\n\u003c/pre\u003e\n\u003cpre data-diff-id=\"2\" data-diff-type=\"compliant\"\u003e\nFROM node:latest\n\nRUN yarn install --ignore-scripts\n\u003c/pre\u003e\n\u003ch2\u003eSee\u003c/h2\u003e\n\u003cul\u003e\n  \u003cli\u003e CWE - \u003ca href=\"https://cwe.mitre.org/data/definitions/506\"\u003eCWE-506 - Embedded Malicious Code\u003c/a\u003e \u003c/li\u003e\n  \u003cli\u003e CWE - \u003ca href=\"https://cwe.mitre.org/data/definitions/829\"\u003eCWE-829 - Inclusion of Functionality from Untrusted Control Sphere\u003c/a\u003e \u003c/li\u003e\n  \u003cli\u003e \u003ca href=\"https://eslint.org/blog/2018/07/postmortem-for-malicious-package-publishes/\"\u003eESLint blog\u003c/a\u003e - Postmortem for Malicious Packages\n  Published on July 12th, 2018 \u003c/li\u003e\n\u003c/ul\u003e",
+      "Severity": "LOW",
+      "StartLine": 22,
+      "EndLine": 25,
+      "rule": {
+        "key": "",
+        "name": ""
+      }
+    }
+  ]
+}
